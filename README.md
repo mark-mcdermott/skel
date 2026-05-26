@@ -41,11 +41,33 @@ vite.config.ts
 EOF
 ```
 
-## Getting Started
+## Install
 
-- `git clone https://github.com/mark-mcdermott/skel.git`
-- `cd skel`
-- `chmod +x skel.sh`
+**Homebrew** (recommended):
+
+```bash
+brew tap mark-mcdermott/skel https://github.com/mark-mcdermott/skel
+brew install skel
+```
+
+**Install script**:
+
+```bash
+git clone https://github.com/mark-mcdermott/skel.git
+cd skel
+./install.sh           # installs to /usr/local/bin/skel
+./install.sh ~/.local/bin  # or a custom directory
+```
+
+**Make**:
+
+```bash
+git clone https://github.com/mark-mcdermott/skel.git
+cd skel
+make install           # installs to /usr/local/bin/skel
+```
+
+## Getting Started
 
 Then try something like this:
 
@@ -83,9 +105,10 @@ Then type your structure and press Enter on a blank line to finish.
 
 ## Rules
 
-- Use 2 spaces per indent level
+- Use 2 spaces per indent level (or set a custom width with `-i N`)
 - Tabs are not allowed
 - Blank lines are not allowed in piped/heredoc input
+- Duplicate paths are not allowed
 - Directories can:
   - end with `/`
   - or be inferred automatically from indentation
@@ -107,14 +130,4 @@ Yesterday I searched for a way to scaffold a project from memory using syntax li
 ## How
 
 I built v0.1.0 of skel by hand over two days, with help from ChatGPT on the bash syntaxes I couldn't remember.
-For v0.2.0, including look-ahead, error checking, tests, built-in instructions, and more, I used ChatGPT extensively. It took me a few hours. 
-
-## v2 Roadmap
-
-Possible future improvements:
-
-- Additional path validation
-- Better interactive UX
-- Optional custom indent widths
-- Packaging/install script
-- Homebrew support
+For v0.2.0, including look-ahead, error checking, tests, built-in instructions, and more, I used ChatGPT extensively. It took me a few hours.

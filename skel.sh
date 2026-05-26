@@ -3,7 +3,7 @@
 show_instruction_line=1
 INDENT_WIDTH=2
 current_depth=0
-VERSION="0.2.0"
+VERSION="0.3.0"
 
 print_help() {
   cat <<'HELP'
@@ -12,23 +12,26 @@ Skel
 Create files and directories from an indented tree.
 
 Usage:
-  skel.sh
-  skel.sh < structure.txt
+  skel
+  skel < structure.txt
+  skel -i 4 < structure.txt
 
 Options:
-  -h, --help     Show help
-  -v, --version  Show version
+  -h, --help        Show help
+  -v, --version     Show version
+  -i, --indent N    Indent width in spaces (default: 2)
 
 Rules:
-  - Use 2 spaces per indent level
+  - Use N spaces per indent level (default: 2)
   - Tabs are not allowed
   - Blank line finishes interactive mode
   - Directories can be implied by indentation
   - Empty directories must end with /
   - Blank lines are not allowed in piped/heredoc input
+  - Duplicate paths are not allowed
 
 Example:
-  skel.sh <<EOF
+  skel <<EOF
 src
   components
     Button.tsx
@@ -55,6 +58,9 @@ has_unsafe_path() {
   name=$(trimmed_line "$line")
 
   [[ "$name" == /* ]] && return 0
+  [[ "$name" == "~" ]] && return 0
+  [[ "$name" == "~/"* ]] && return 0
+  [[ "$name" == "." ]] && return 0
   [[ "$name" == ".." ]] && return 0
   [[ "$name" == ../* ]] && return 0
   [[ "$name" == */../* ]] && return 0
@@ -111,19 +117,19 @@ has_tabs() {
 
 validate_lines() {
   local previous_indent=0
+  local path_stack=()
+  local seen_paths=$'\n'
 
   for ((i = 0; i < ${#lines[@]}; i++)); do
     local line="${lines[$i]}"
     local line_number=$((i + 1))
-    local cur_indent
+    local cur_indent name target_depth full_path part
 
     is_blank_line "$line" && error "$line_number" "blank lines are not allowed"
-    has_tabs "$line" && error "$line_number" "tabs are not allowed. Use 2 spaces per indent."
+    has_tabs "$line" && error "$line_number" "tabs are not allowed. Use $INDENT_WIDTH spaces per indent."
+    has_unsafe_path "$line" && error "$line_number" "unsafe paths are not allowed"
 
-    if has_unsafe_path "$line"; then
-      error "$line_number" "unsafe paths are not allowed"
-    fi
-
+    name=$(trimmed_line "$line")
     cur_indent=$(get_indent "$line")
 
     if (( cur_indent % INDENT_WIDTH != 0 )); then
@@ -133,6 +139,21 @@ validate_lines() {
     if (( cur_indent > previous_indent + INDENT_WIDTH )); then
       error "$line_number" "cannot jump multiple indent levels"
     fi
+
+    target_depth=$(( cur_indent / INDENT_WIDTH ))
+    path_stack=("${path_stack[@]:0:$target_depth}")
+    path_stack+=("$name")
+
+    full_path=""
+    for part in "${path_stack[@]}"; do
+      [[ -n "$full_path" ]] && full_path="${full_path}/"
+      full_path="${full_path}${part}"
+    done
+
+    if [[ "$seen_paths" == *$'\n'"$full_path"$'\n'* ]]; then
+      error "$line_number" "duplicate path: $full_path"
+    fi
+    seen_paths="${seen_paths}${full_path}"$'\n'
 
     previous_indent=$cur_indent
   done
@@ -162,26 +183,39 @@ process_line() {
   fi
 }
 
-case "$1" in
-  -h|--help)
-    print_help
-    exit 0
-    ;;
-  -v|--version)
-    echo "skel $VERSION"
-    exit 0
-    ;;
-esac
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)
+      print_help
+      exit 0
+      ;;
+    -v|--version)
+      echo "skel $VERSION"
+      exit 0
+      ;;
+    -i|--indent)
+      if [[ -z "$2" || ! "$2" =~ ^[1-9][0-9]*$ ]]; then
+        echo "Error: --indent requires a positive integer" >&2
+        exit 1
+      fi
+      INDENT_WIDTH="$2"
+      shift 2
+      ;;
+    *)
+      echo "Error: unknown option: $1" >&2
+      exit 1
+      ;;
+  esac
+done
 
 lines=()
 
 if [[ -t 0 ]]; then
-  if [[ $show_instruction_line == 1 ]]; then
-    echo "Enter file structure. Blank line to finish."
-  fi
+  echo "Enter file structure (${INDENT_WIDTH} spaces/level, blank line to finish):"
 
-  while IFS= read -r line; do
+  while IFS= read -e -r -p "> " line; do
     [[ -z "${line//[[:space:]]/}" ]] && break
+    history -s "$line"
     lines+=("$line")
   done
 else
