@@ -10,11 +10,11 @@ App scaffolding by typing in a tree-type list of the files and directories
 </p>
 
 <p align="center">
-  <img src="./walkthrough-v0.1.0.gif" width="720" alt="Skel walkthrough">
+  <img src="./walkthrough-v0.2.0.gif" width="720" alt="Skel walkthrough">
 </p>
-
 ## What
-`skel` is a bash script where you can quickly create a bunch of blank files in the file structure you need by typing something like:
+
+Skel is a small bash utility for quickly scaffolding file structures from an indented tree.
 
 ```bash
 ./skel.sh <<EOF
@@ -22,17 +22,17 @@ App scaffolding by typing in a tree-type list of the files and directories
 .gitignore
 .prettierrc
 electron-builder.yml
-src/
-  main/
+src
+  main
     index.ts
-  preload/
+  preload
     index.ts
-  renderer/
+  renderer
     App.tsx
     electron.d.ts
     index.html
     main.tsx
-    styles/
+    styles
       global.css
     vite-env.d.ts
 tsconfig.json
@@ -42,61 +42,79 @@ EOF
 ```
 
 ## Getting Started
+
 - `git clone https://github.com/mark-mcdermott/skel.git`
 - `cd skel`
 - `chmod +x skel.sh`
-- then try something like this:
+
+Then try something like this:
+
 ```bash
 ./skel.sh <<EOF
 file1.txt
-directory1/
+directory1
   file2.txt
-  directory2/
+  directory2
     file3.txt
   file4.txt
 file5.txt
 EOF
 ```
-- `skel` will create this file structure:
-```
+
+Skel will create this file structure:
+
+```text
 ├── directory1
-│   ├── directory2
-│   │   └── file3.txt
-│   ├── file2.txt
-│   └── file4.txt
+│   ├── directory2
+│   │   └── file3.txt
+│   ├── file2.txt
+│   └── file4.txt
 ├── file1.txt
 └── file5.txt
 ```
 
-## Details
-- `skel` uses heredoc syntax, so start your `skel` command like this:
+You can also run skel interactively:
+
+```bash
+./skel.sh
 ```
-skel <<EOF
+
+Then type your structure and press Enter on a blank line to finish.
+
+## Rules
+
+- Use 2 spaces per indent level
+- Tabs are not allowed
+- Blank lines are not allowed in piped/heredoc input
+- Directories can:
+  - end with `/`
+  - or be inferred automatically from indentation
+- Empty directories must end with `/`
+- Skel creates files relative to the current directory
+
+## Tests
+
+Run the test suite with:
+
+```bash
+./test.sh
 ```
-- End your `skel` command like this:
-```
-EOF
-```
-- Every line between those two is the name of a file or directory.
-- Directories **must** end in `/`. That's how `skel` knows it's a directory.
-- For all files/directories inside a directory, use two spaces to indent.
-- `skel` creates the file structure in the location you execute `skel` from.
 
 ## Why
-Yesterday I searched for a way to scaffold a project out from memory using syntax like above and ChatGPT said there were no really clean bash solutions already built. So I built it. It was also nice practice thinking through a simple algorithm like this.
+
+Yesterday I searched for a way to scaffold a project from memory using syntax like the above and ChatGPT said there were not any clean bash solutions built for this. So I built my own. It also ended up being nice practice for thinking through a simple algorithm.
 
 ## How
-I built this v0 of `skel` by hand over two days, with help from ChatGPT on the bash syntaxes I couldn't remember.
 
-## Roadmap
-This v0 is simple--it works if you follow every directory with `/` and use two spaces for all indents. It does not yet provide a look-ahead, error checking, error messages, or built-in instructions. These are on the map for v1.
+I built v0.1.0 of skel by hand over two days, with help from ChatGPT on the bash syntaxes I couldn't remember.
+For v0.2.0, including look-ahead, error checking, tests, built-in instructions, and more, I used ChatGPT extensively. It took me a few hours. 
 
-## Issues
-- No error checking
-- No error messages
-- Needs built-in instructions
-- Should error on single spaces or tab indents
-- Should error on multiple indents (multiple levels without directories)
-- Should error on blank lines
-- Should error on indents under files
-- A lookahead approach that detected if next line is indented could omit `/` for all dirs except empty ones
+## v2 Roadmap
+
+Possible future improvements:
+
+- Additional path validation
+- Better interactive UX
+- Optional custom indent widths
+- Packaging/install script
+- Homebrew support
