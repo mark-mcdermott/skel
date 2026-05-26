@@ -177,8 +177,8 @@ run_failing_test "test_absolute_path" $'/tmp/outside.txt' "unsafe paths are not 
 run_failing_test "test_nested_parent_directory_path" $'src/../bad.txt' "unsafe paths are not allowed"
 run_command_test "test_help_flag" "Create files and directories from an indented tree" --help
 run_command_test "test_short_help_flag" "Usage:" -h
-run_command_test "test_version_flag" "skel 1.0.0" --version
-run_command_test "test_short_version_flag" "skel 1.0.0" -v
+run_command_test "test_version_flag" "skel 0.2.0" --version
+run_command_test "test_short_version_flag" "skel 0.2.0" -v
 
 echo
 echo "All tests passed."
