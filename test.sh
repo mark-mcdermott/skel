@@ -237,8 +237,8 @@ run_failing_command_test "test_indent_zero" "positive integer" --indent 0
 run_failing_command_test "test_indent_invalid" "positive integer" --indent foo
 run_command_test "test_help_flag" "Create files and directories from an indented tree" --help
 run_command_test "test_short_help_flag" "Usage:" -h
-run_command_test "test_version_flag" "skel 0.3.1" --version
-run_command_test "test_short_version_flag" "skel 0.3.1" -v
+run_command_test "test_version_flag" "skel 0.3.2" --version
+run_command_test "test_short_version_flag" "skel 0.3.2" -v
 
 echo
 echo "All tests passed."

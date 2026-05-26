@@ -3,7 +3,7 @@
 show_instruction_line=1
 INDENT_WIDTH=2
 current_depth=0
-VERSION="0.3.1"
+VERSION="0.3.2"
 
 print_help() {
   cat <<'HELP'
