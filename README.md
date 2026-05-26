@@ -13,7 +13,7 @@ App scaffolding by typing in a tree-type list of the files and directories
   <img src="./walkthrough-v0.2.0.gif" width="720" alt="Skel walkthrough">
 </p>
 
-## What
+## About
 
 Skel is a small bash utility for quickly scaffolding file structures from an indented tree.
 
