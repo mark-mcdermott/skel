@@ -18,28 +18,28 @@ App scaffolding by typing in a tree-type list of the files and directories
 Skel is a small bash utility for quickly scaffolding file structures from an indented tree.
 
 ```bash
-./skel.sh <<EOF
-.eslint.json
-.gitignore
-.prettierrc
-electron-builder.yml
-src
-  main
-    index.ts
-  preload
-    index.ts
-  renderer
-    App.tsx
-    electron.d.ts
-    index.html
-    main.tsx
-    styles
-      global.css
-    vite-env.d.ts
-tsconfig.json
-tsconfig.node.json
-vite.config.ts
-EOF
+$ skel
+> .eslint.json
+> .gitignore
+> .prettierrc
+> electron-builder.yml
+> src
+>   main
+>     index.ts
+>   preload
+>     index.ts
+>   renderer
+>     App.tsx
+>     electron.d.ts
+>     index.html
+>     main.tsx
+>     styles
+>       global.css
+>     vite-env.d.ts
+> tsconfig.json
+> tsconfig.node.json
+> vite.config.ts
+> 
 ```
 
 ## Install
@@ -47,7 +47,7 @@ EOF
 **Homebrew** (recommended):
 
 ```bash
-brew tap mark-mcdermott/skel https://github.com/mark-mcdermott/skel
+brew tap mark-mcdermott/skel
 brew install skel
 ```
 
@@ -70,18 +70,18 @@ make install           # installs to /usr/local/bin/skel
 
 ## Getting Started
 
-Then try something like this:
+Run `skel`, type your structure, and press Enter on a blank line to finish:
 
 ```bash
-./skel.sh <<EOF
-file1.txt
-directory1
-  file2.txt
-  directory2
-    file3.txt
-  file4.txt
-file5.txt
-EOF
+$ skel
+> file1.txt
+> directory1
+>   file2.txt
+>   directory2
+>     file3.txt
+>   file4.txt
+> file5.txt
+> 
 ```
 
 Skel will create this file structure:
@@ -96,13 +96,17 @@ Skel will create this file structure:
 └── file5.txt
 ```
 
-You can also run skel interactively:
+You can also pipe input or use a heredoc:
 
 ```bash
-./skel.sh
-```
+skel < structure.txt
 
-Then type your structure and press Enter on a blank line to finish.
+skel <<EOF
+file1.txt
+directory1
+  file2.txt
+EOF
+```
 
 ## Rules
 
@@ -110,6 +114,7 @@ Then type your structure and press Enter on a blank line to finish.
 - Tabs are not allowed
 - Blank lines are not allowed in piped/heredoc input
 - Duplicate paths are not allowed
+- Paths must be relative — `/`, `~`, and `..` are not allowed
 - Directories can:
   - end with `/`
   - or be inferred automatically from indentation
@@ -124,6 +129,13 @@ Run the test suite with:
 ./test.sh
 ```
 
+## Releasing
+
+1. Bump `VERSION` in `skel.sh`
+2. Run `make release`
+
+This tags the commit, pushes it, computes the tarball sha256, and updates + commits `homebrew-skel` automatically.
+
 ## Why
 
 Yesterday I searched for a way to scaffold a project from memory using syntax like the above and ChatGPT said there were not any clean bash solutions built for this. So I built my own. It also ended up being nice practice for thinking through a simple algorithm.
@@ -132,3 +144,4 @@ Yesterday I searched for a way to scaffold a project from memory using syntax li
 
 I built v0.1.0 of skel by hand over two days, with help from ChatGPT on the bash syntaxes I couldn't remember.
 For v0.2.0, including look-ahead, error checking, tests, built-in instructions, and more, I used ChatGPT extensively. It took me a few hours.
+For v0.3.0, I added the `-i`/`--indent` flag, path safety validation, readline history in interactive mode, and Homebrew/install.sh packaging.
