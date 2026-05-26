@@ -10,7 +10,7 @@ App scaffolding by typing in a tree-type list of the files and directories
 </p>
 
 <p align="center">
-  <img src="./walkthrough-v0.2.0.gif" width="720" alt="Skel walkthrough">
+  <img src="./walkthrough-v0.3.0.gif" width="720" alt="Skel walkthrough">
 </p>
 
 ## About
