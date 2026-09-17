@@ -39,6 +39,7 @@ run_failing_test() {
   local test_dir
   local output
   local status
+  local created
 
   test_dir="$(mktemp -d)"
   TEST_DIRS+=("$test_dir")
@@ -67,6 +68,9 @@ run_failing_test() {
   fi
 
   [[ "$output" == *"$expected_message"* ]] || fail "$test_name expected message: $expected_message"
+
+  created="$(cd "$test_dir" && find . -mindepth 1 ! -name skel.sh)"
+  [[ -z "$created" ]] || fail "$test_name should not have created: $created"
 
   pass "$test_name"
 }
@@ -230,6 +234,7 @@ run_failing_test "test_absolute_path" $'/tmp/outside.txt' "unsafe paths are not 
 run_failing_test "test_nested_parent_directory_path" $'src/../bad.txt' "unsafe paths are not allowed"
 run_failing_test "test_tilde_path" $'~' "unsafe paths are not allowed"
 run_failing_test "test_tilde_subpath" $'~/foo.txt' "unsafe paths are not allowed"
+run_failing_test "test_home_absolute_path" "$HOME/outside.txt" "unsafe paths are not allowed"
 run_failing_test "test_dot_entry" $'.' "unsafe paths are not allowed"
 run_failing_test "test_duplicate_path" $'file.txt\nfile.txt' "duplicate path"
 run_failing_test "test_duplicate_nested_path" $'src\n  file.txt\n  file.txt' "duplicate path"

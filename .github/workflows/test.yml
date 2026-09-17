@@ -10,9 +10,8 @@ on:
 
 jobs:
   # Shared verify loop - definition lives in mm-claude-starter.
-  # Shellcheck is not wired up yet: skel.sh trips SC2034 and SC2088 today, and
-  # fixing those is a code change, not a CI change.
   verify:
     uses: mark-mcdermott/mm-claude-starter/.github/workflows/bash-verify.yml@main
     with:
+      shellcheck-paths: skel.sh
       test-command: chmod +x skel.sh test.sh && ./test.sh
