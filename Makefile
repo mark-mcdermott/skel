@@ -1,6 +1,10 @@
 PREFIX ?= /usr/local
 HOMEBREW_SKEL_DIR ?= $(HOME)/Dev/homebrew-skel
 
+# Vercel deploy hook for skel.sh. Deliberately empty here: the URL is a
+# credential and this repo is public. Export it in your shell instead.
+SKEL_SH_DEPLOY_HOOK ?=
+
 install:
 	install -m 755 skel.sh $(DESTDIR)$(PREFIX)/bin/skel
 
@@ -32,6 +36,29 @@ release:
 	git -C "$(HOMEBREW_SKEL_DIR)" commit -m "release: update formula for v$$version"; \
 	git -C "$(HOMEBREW_SKEL_DIR)" push; \
 	echo ""; \
+	echo "Step 5: refreshing skel.sh..."; \
+	$(MAKE) --no-print-directory deploy-site; \
+	echo ""; \
 	echo "Done. v$$version is live."
 
-.PHONY: install uninstall test release
+# Tells skel.sh to rebuild. The site reads the released version from this repo's
+# git tags at build time, so without this it keeps showing whatever was current
+# when it last deployed. Split out so a release that ran without the hook set
+# can be fixed with `make deploy-site` rather than a re-release.
+deploy-site:
+	@if [ -z "$(SKEL_SH_DEPLOY_HOOK)" ]; then \
+		echo "  SKEL_SH_DEPLOY_HOOK is not set — skel.sh was NOT refreshed and will"; \
+		echo "  keep showing the previous version. Grab the URL from Vercel"; \
+		echo "  (skel.sh > Settings > Git > Deploy Hooks), export it, then run:"; \
+		echo "      make deploy-site"; \
+		exit 0; \
+	fi; \
+	if curl -fsS -X POST "$(SKEL_SH_DEPLOY_HOOK)" >/dev/null; then \
+		echo "  skel.sh rebuild triggered."; \
+	else \
+		echo "  Deploy hook failed. skel.sh still shows the previous version."; \
+		echo "  Retry with: make deploy-site"; \
+		exit 1; \
+	fi
+
+.PHONY: install uninstall test release deploy-site
