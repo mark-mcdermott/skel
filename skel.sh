@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-show_instruction_line=1
 INDENT_WIDTH=2
 current_depth=0
 VERSION="0.3.2"
@@ -59,6 +58,9 @@ has_unsafe_path() {
 
   [[ "$name" == /* ]] && return 0
   [[ "$name" == "~" ]] && return 0
+  # Tree lines are literal text, never shell-expanded, so match the "~/"
+  # characters themselves rather than $HOME.
+  # shellcheck disable=SC2088
   [[ "$name" == "~/"* ]] && return 0
   [[ "$name" == "." ]] && return 0
   [[ "$name" == ".." ]] && return 0
