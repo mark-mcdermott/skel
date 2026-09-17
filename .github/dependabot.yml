@@ -1,0 +1,11 @@
+version: 2
+updates:
+  # No package manifest here - pinned action versions are the only thing that drifts.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        patterns: ["*"]

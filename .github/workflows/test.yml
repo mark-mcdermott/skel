@@ -2,18 +2,17 @@ name: Tests
 
 on:
   push:
+    branches: [main]
   pull_request:
+  schedule:
+    # Daily, so the badge means "still green today" rather than "was green in May".
+    - cron: "23 6 * * *"
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out repo
-        uses: actions/checkout@v4
-
-      - name: Make scripts executable
-        run: chmod +x skel.sh test.sh
-
-      - name: Run tests
-        run: ./test.sh
+  # Shared verify loop - definition lives in mm-claude-starter.
+  # Shellcheck is not wired up yet: skel.sh trips SC2034 and SC2088 today, and
+  # fixing those is a code change, not a CI change.
+  verify:
+    uses: mark-mcdermott/mm-claude-starter/.github/workflows/bash-verify.yml@main
+    with:
+      test-command: chmod +x skel.sh test.sh && ./test.sh
