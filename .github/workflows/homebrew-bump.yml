@@ -1,0 +1,60 @@
+# Keeps the Homebrew tap (mark-mcdermott/homebrew-skel) in sync with releases.
+# On every published release it recomputes the tarball URL + sha256 and commits
+# the bump to the tap's Formula/skel.rb.
+#
+# This used to run from a laptop inside `make release`, writing to a local
+# checkout of the tap at ~/Dev/homebrew-skel. A release published any other way
+# left the formula stale, and it needed that checkout to exist and be current.
+#
+# Requires a repo secret HOMEBREW_TAP_TOKEN: a token with Contents:read/write on
+# mark-mcdermott/homebrew-skel (a fine-grained PAT scoped to that repo, or a
+# classic PAT with `repo`). The default GITHUB_TOKEN cannot push cross-repo.
+name: Bump Homebrew formula
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to bump to (e.g. v0.3.2)"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve tag, URL and checksum
+        id: rel
+        run: |
+          tag="${{ github.event.release.tag_name || inputs.tag }}"
+          url="https://github.com/${{ github.repository }}/archive/refs/tags/${tag}.tar.gz"
+          sha="$(curl -fsSL "$url" | sha256sum | cut -d' ' -f1)"
+          {
+            echo "version=${tag#v}"
+            echo "url=$url"
+            echo "sha=$sha"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Check out the tap
+        uses: actions/checkout@v4
+        with:
+          repository: mark-mcdermott/homebrew-skel
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+
+      - name: Update and push the formula
+        run: |
+          formula="Formula/skel.rb"
+          sed -i -E "s#^  url \".*\"#  url \"${{ steps.rel.outputs.url }}\"#" "$formula"
+          sed -i -E "s#^  sha256 \".*\"#  sha256 \"${{ steps.rel.outputs.sha }}\"#" "$formula"
+          if git diff --quiet; then
+            echo "Formula already up to date; nothing to do."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "skel ${{ steps.rel.outputs.version }}"
+          git push

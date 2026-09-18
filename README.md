@@ -134,7 +134,12 @@ Run the test suite with:
 1. Bump `VERSION` in `skel.sh`
 2. Run `make release`
 
-This tags the commit, pushes it, computes the tarball sha256, and updates + commits `homebrew-skel` automatically.
+That tags the commit, pushes it, and publishes a GitHub Release. **Publishing the Release is what triggers everything else**, in GitHub Actions rather than on your machine:
+
+- [`homebrew-bump.yml`](.github/workflows/homebrew-bump.yml) recomputes the tarball sha256 and commits the bump to [homebrew-skel](https://github.com/mark-mcdermott/homebrew-skel)
+- [`notify-site.yml`](.github/workflows/notify-site.yml) tells [skel.sh](https://skel.sh) to re-sync the version and install steps it displays
+
+Both need repo secrets with write access to their target repo — `HOMEBREW_TAP_TOKEN` and `SITE_DISPATCH_TOKEN`. A plain `git tag` is not enough: with no Release published, neither workflow fires and both the formula and the site stay on the previous version.
 
 ## Why
 
