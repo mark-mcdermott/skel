@@ -1,10 +1,6 @@
 PREFIX ?= /usr/local
 HOMEBREW_SKEL_DIR ?= $(HOME)/Dev/homebrew-skel
 
-# Vercel deploy hook for skel.sh. Deliberately empty here: the URL is a
-# credential and this repo is public. Export it in your shell instead.
-SKEL_SH_DEPLOY_HOOK ?=
-
 install:
 	install -m 755 skel.sh $(DESTDIR)$(PREFIX)/bin/skel
 
@@ -36,29 +32,34 @@ release:
 	git -C "$(HOMEBREW_SKEL_DIR)" commit -m "release: update formula for v$$version"; \
 	git -C "$(HOMEBREW_SKEL_DIR)" push; \
 	echo ""; \
-	echo "Step 5: refreshing skel.sh..."; \
-	$(MAKE) --no-print-directory deploy-site; \
+	echo "Step 5: publishing the GitHub Release..."; \
+	$(MAKE) --no-print-directory publish-release VERSION_TAG="v$$version"; \
 	echo ""; \
 	echo "Done. v$$version is live."
 
-# Tells skel.sh to rebuild. The site reads the released version from this repo's
-# git tags at build time, so without this it keeps showing whatever was current
-# when it last deployed. Split out so a release that ran without the hook set
-# can be fixed with `make deploy-site` rather than a re-release.
-deploy-site:
-	@if [ -z "$(SKEL_SH_DEPLOY_HOOK)" ]; then \
-		echo "  SKEL_SH_DEPLOY_HOOK is not set — skel.sh was NOT refreshed and will"; \
-		echo "  keep showing the previous version. Grab the URL from Vercel"; \
-		echo "  (skel.sh > Settings > Git > Deploy Hooks), export it, then run:"; \
-		echo "      make deploy-site"; \
-		exit 0; \
+# Publishing the Release is what refreshes skel.sh: the site's sync workflow
+# keys off `release: published` via a repository_dispatch, and its sync script
+# reads the latest *release* tag. A tag alone is not enough — it fires nothing
+# and the site keeps showing the previous version.
+#
+# This replaced a Vercel deploy hook that only fired from the one machine
+# holding SKEL_SH_DEPLOY_HOOK, so a release published any other way silently
+# left the site stale.
+publish-release:
+	@if ! command -v gh >/dev/null 2>&1; then \
+		echo "  gh is not installed — the Release was NOT published and skel.sh will"; \
+		echo "  keep showing the previous version. Install gh, then run:"; \
+		echo "      make publish-release VERSION_TAG=$(VERSION_TAG)"; \
+		exit 1; \
 	fi; \
-	if curl -fsS -X POST "$(SKEL_SH_DEPLOY_HOOK)" >/dev/null; then \
-		echo "  skel.sh rebuild triggered."; \
+	if gh release view "$(VERSION_TAG)" >/dev/null 2>&1; then \
+		echo "  Release $(VERSION_TAG) already exists; nothing to publish."; \
+	elif gh release create "$(VERSION_TAG)" --title "$(VERSION_TAG)" --generate-notes; then \
+		echo "  Release published. skel.sh will re-sync within a minute."; \
 	else \
-		echo "  Deploy hook failed. skel.sh still shows the previous version."; \
-		echo "  Retry with: make deploy-site"; \
+		echo "  Publishing failed. skel.sh still shows the previous version."; \
+		echo "  Retry with: make publish-release VERSION_TAG=$(VERSION_TAG)"; \
 		exit 1; \
 	fi
 
-.PHONY: install uninstall test release deploy-site
+.PHONY: install uninstall test release publish-release

@@ -1,0 +1,33 @@
+# Tells skel.sh that a new version is out, so it re-syncs its content within a
+# minute instead of waiting for its nightly cron.
+#
+# Requires a repo secret SITE_DISPATCH_TOKEN: a token with Contents:read/write
+# on mark-mcdermott/skel.sh (a fine-grained PAT scoped to that repo, or a
+# classic PAT with `repo`). The default GITHUB_TOKEN cannot dispatch cross-repo.
+# Without it this job fails and the site falls back to its daily cron.
+name: Notify skel.sh
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch cli-release to the site
+        env:
+          GH_TOKEN: ${{ secrets.SITE_DISPATCH_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "SITE_DISPATCH_TOKEN is not set; the site will pick this up on its daily cron."
+            exit 1
+          fi
+          gh api repos/mark-mcdermott/skel.sh/dispatches \
+            --method POST \
+            --field event_type=cli-release \
+            --field 'client_payload[tag]=${{ github.event.release.tag_name }}'
